@@ -13,7 +13,6 @@ from utils import util
 from data import create_dataloader, create_dataset
 from models import create_model
 
-
 def init_dist(backend='nccl', **kwargs):
     ''' initialization for distributed training'''
     # if mp.get_start_method(allow_none=True) is None:

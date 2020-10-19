@@ -36,6 +36,6 @@ class DWSR(nn.Module):
 
     lrsb = self.DWT(x)
     dsb = self.mid_layers(lrsb)
-    srsb = 0.1 * lrsb + dsb
+    srsb = 0.5 * lrsb + dsb
     y = self.IWT(srsb)
     return y.cuda()

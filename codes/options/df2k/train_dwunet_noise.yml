@@ -1,5 +1,5 @@
 #### general settings
-name: RealSR_Kernel
+name: RealSR_DWUNet
 use_tb_logger: true
 model: srgan
 distortion: sr
@@ -11,8 +11,8 @@ datasets:
   train:
     name: train
     mode: LQGT
-    aug: ~
-    # noise_data: ../datasets/DF2K/Corrupted_noise/
+    aug: noise
+    noise_data: ../datasets/DF2K/Corrupted_noise/
     dataroot_GT: ../datasets/DF2K/generated_kernel/tdsr/HR
     dataroot_LQ: ../datasets/DF2K/generated_kernel/tdsr/LR
     use_shuffle: true
@@ -30,7 +30,7 @@ datasets:
 
 #### network structures
 network_G:
-  which_model_G: RRDBNet
+  which_model_G: DWUNet
   in_nc: 3
   out_nc: 3
   nf: 64

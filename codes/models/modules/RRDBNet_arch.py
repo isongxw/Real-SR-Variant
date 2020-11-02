@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import models.modules.module_util as mutil
-from models.modules.wavelet import DWT_Haar, IWT_Haar
 
 
 class ResidualDenseBlock_5C(nn.Module):

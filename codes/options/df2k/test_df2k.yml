@@ -3,12 +3,12 @@ suffix: ~  # add suffix to saved images
 model: srgan
 distortion: sr
 scale: 4
-crop_border: ~  # crop border when evaluation. If None(~), crop the scale pixels
+crop_border:   # crop border when evaluation. If None(~), crop the scale pixels
 gpu_ids: [0]
 
 datasets:
   test_1:  # the 1st test dataset
-    name: DIV2K
+    name: DIV2K_Kernel
     mode: LQGT
     dataroot_LR: ../../datasets/ntire20/Corrupted-va-x
     dataroot_GT: ../../datasets/ntire20/Corrupted-va-y

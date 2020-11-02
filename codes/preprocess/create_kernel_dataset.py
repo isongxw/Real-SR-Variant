@@ -27,8 +27,8 @@ with open('./preprocess/paths.yml', 'r') as stream:
     PATHS = yaml.load(stream)
 
 if opt.dataset == 'df2k':
-    path_sdsr = PATHS['datasets']['df2k'] + '/generated/sdsr/'
-    path_tdsr = PATHS['datasets']['df2k'] + '/generated/tdsr/'
+    path_sdsr = PATHS['datasets']['df2k'] + '/generated_kernel/sdsr/'
+    path_tdsr = PATHS['datasets']['df2k'] + '/generated_kernel/tdsr/'
     input_source_dir = PATHS['df2k']['tdsr']['source']
     input_target_dir = PATHS['df2k']['tdsr']['target']
     source_files = [os.path.join(input_source_dir, x) for x in os.listdir(input_source_dir) if utils.is_image_file(x)]

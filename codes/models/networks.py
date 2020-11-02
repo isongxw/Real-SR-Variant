@@ -4,7 +4,7 @@ import logging
 import models.modules.SRResNet_arch as SRResNet_arch
 import models.modules.discriminator_vgg_arch as SRGAN_arch
 import models.modules.RRDBNet_arch as RRDBNet_arch
-import models.modules.DWSR_arch as DWSR_arch
+import models.modules.DWUNet_arch as DWUNet_arch
 logger = logging.getLogger('base')
 
 class ResidualBlock(nn.Module):
@@ -63,7 +63,7 @@ def define_G(opt):
         netG = RRDBNet_arch.RRDBNet(in_nc=opt_net['in_nc'], out_nc=opt_net['out_nc'],
                                     nf=opt_net['nf'], nb=opt_net['nb'])
     elif which_model == 'DWSR':
-        netG = DWSR_arch.DWSR(10)
+        netG = DWUNet_arch.DWUNet()
     # elif which_model == 'sft_arch':  # SFT-GAN
     #     netG = sft_arch.SFT_Net()
     else:

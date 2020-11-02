@@ -1,61 +1,12 @@
-# RealSR 
-![logo](figures/logo.jpg)
+# Real-SR-Variant
 
-Real-World Super-Resolution via Kernel Estimation and Noise Injection (CVPR 2020 Workshops)
+## Update - November 2, 2020
+- Add DWUnet, performance improvement
 
-Xiaozhong Ji, Yun Cao, Ying Tai, Chengjie Wang, Jilin Li, and Feiyue Huang
+## Init - Actober 16, 2020
+- Init repository from [RealSR](https://github.com/Tencent/Real-SR)
 
-*Tencent Youtu Lab*
-
-Our solution is the **winner of CVPR NTIRE 2020 Challenge on Real-World Super-Resolution** in both tracks.
-
-(*Official PyTorch Implementation*)
-
-## Update - September 1, 2020
-- Release training code at Github/Tencent.
-
-## Update - May 26, 2020
-- Add [DF2K-JPEG](https://drive.google.com/open?id=1w8QbCLM6g-MMVlIhRERtSXrP-Dh7cPhm) Model.
-- [Executable files](https://drive.google.com/open?id=1-FZPyMtuDfEnAPgSBfePYhv0NorznDPU) based on [ncnn](https://github.com/Tencent/ncnn) are available. Test your own images on windows/linux/macos. More details refer to [realsr-ncnn-vulkan](https://github.com/nihui/realsr-ncnn-vulkan)
-    - Usage - ```./realsr-ncnn-vulkan -i in.jpg -o out.png```
-    - ```-x``` - use ensemble
-    - ```-g 0``` - select gpu id.
-
-## Introduction
-
-Recent state-of-the-art super-resolution methods have achieved impressive performance on ideal datasets regardless of blur and noise. However, these methods always fail in real-world image super-resolution, since most of them adopt simple bicubic downsampling from high-quality images to construct Low-Resolution (LR) and High-Resolution (HR) pairs for training which may lose track of frequency-related details. To address this issue, we focus on designing a novel degradation framework for real-world images by estimating various blur kernels as well as real noise distributions. Based on our novel degradation framework, we can acquire LR images sharing a common domain with real-world images. Then, we propose a real-world super-resolution model aiming at better perception. Extensive experiments on synthetic noise data and real-world images demonstrate that our method outperforms the state-of-the-art methods, resulting in lower noise and better visual quality. In addition, our method is the winner of NTIRE 2020 Challenge on both tracks of Real-World Super-Resolution, which significantly outperforms other competitors by large margins. 
-
-![RealSR](figures/arch.png)  
-
-If you are interested in this work, please cite our [paper](http://openaccess.thecvf.com/content_CVPRW_2020/papers/w31/Ji_Real-World_Super-Resolution_via_Kernel_Estimation_and_Noise_Injection_CVPRW_2020_paper.pdf)
-
-    @InProceedings{Ji_2020_CVPR_Workshops,
-                   author = {Ji, Xiaozhong and Cao, Yun and Tai, Ying and Wang, Chengjie and Li, Jilin and Huang, Feiyue},
-                   title = {Real-World Super-Resolution via Kernel Estimation and Noise Injection},
-                   booktitle = {The IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
-                   month = {June},
-                   year = {2020}
-         }
-
-and challenge report [NTIRE 2020 Challenge on Real-World Image Super-Resolution: Methods and Results](https://arxiv.org/pdf/2005.01996.pdf)
-
-    @article{Lugmayr2020ntire,
-            title={NTIRE 2020 Challenge on Real-World Image Super-Resolution: Methods and Results},
-            author={Andreas Lugmayr, Martin Danelljan, Radu Timofte, Namhyuk Ahn, Dongwoon Bai, Jie Cai, Yun Cao, Junyang Chen, Kaihua Cheng, SeYoung Chun, Wei Deng, Mostafa El-Khamy Chiu, Man Ho, Xiaozhong Ji, Amin Kheradmand, Gwantae Kim, Hanseok Ko, Kanghyu Lee, Jungwon Lee, Hao Li, Ziluan Liu, Zhi-Song Liu, Shuai Liu, Yunhua Lu, Zibo Meng, Pablo Navarrete, Michelini Christian, Micheloni Kalpesh, Prajapati Haoyu, Ren Yong, Hyeok Seo, Wan-Chi Siu, Kyung-Ah Sohn, Ying Tai, Rao Muhammad Umer, Shuangquan Wang, Huibing Wang, Timothy Haoning Wu, Haoning Wu, Biao Yang, Fuzhi Yang, Jaejun Yoo, Tongtong Zhao, Yuanbo Zhou, Haijie Zhuo, Ziyao Zong, Xueyi Zou},
-            journal={CVPR Workshops},
-            year={2020},
-        }
-
-    
-
- 
-## Visual Results
-
-![0](figures/0913.png)
-
-![1](figures/0935.png)
-
-# Quantitative Results Compared with Other Participating Methods
+# Quantitative Results Compared with Other Participating Methods [RealSR]
 
 'Impressionism' is our team. Note that the final decision is based on MOS (Mean Opinion Score) and MOR (Mean Opinion Rank).
 
@@ -63,7 +14,7 @@ and challenge report [NTIRE 2020 Challenge on Real-World Image Super-Resolution:
 
 ![1](figures/track2.png)
 
-# Qualitative Results Compared with Other Participating Methods
+# Qualitative Results Compared with Other Participating Methods [RealSR]
 
 'Impressionism' is our team. 
 
@@ -130,7 +81,7 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
  2. train SR model
     - Modify the configuration file options/df2k/train_bicubic_noise.yml
     - Run command :
-    ```CUDA_VISIBLE_DEVICES=4,5,6,7 python3 train.py -opt options/df2k/train_bicubic_noise.yml```
+    ```python3 train.py -opt options/df2k/train_bicubic_noise.yml```
     - checkpoint dir is in '../experiments'
     
 ### Track 2
@@ -138,7 +89,7 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
     - Use [KernelGAN](https://github.com/sefibk/KernelGAN) to generate kernels from source images. Clone the repo here. Replace SOURCE_PATH with specific path and run :
         ``` 
       cd KernelGAN
-      CUDA_VISIBLE_DEVICES=4,5,6,7 python3 train.py --X4 --input-dir SOURCE_PATH
+      python3 train.py --X4 --input-dir SOURCE_PATH
         ```
     
     - specify dataset paths in './preprocess/path.yml' and generated KERNEL_PATH to kernel create kernel dataset:
@@ -150,7 +101,7 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
  2. train SR model
     - Modify the configuration file options/dped/train_kernel_noise.yml
     - run command :
-    ```CUDA_VISIBLE_DEVICES=4,5,6,7 python3 train.py -opt options/dped/train_kernel_noise.yml```
+    ```python3 train.py -opt options/dped/train_kernel_noise.yml```
     - checkpoint dir is in '../experiments'
  
  

@@ -234,6 +234,7 @@ def main():
         logger.info('Saving the final model.')
         model.save('latest')
         logger.info('End of training.')
+        util.email_notification("isongxw@foxmail.com", "Train Finished: " + opt['name'], opt['name'])
 
 
 if __name__ == '__main__':

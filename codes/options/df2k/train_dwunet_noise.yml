@@ -1,20 +1,20 @@
 #### general settings
-name: RealSR_DWUNet
+name: RealSR_DWUNet_WithoutN
 use_tb_logger: true
 model: srgan
 distortion: sr
 scale: 4
-gpu_ids: [1,2]
+gpu_ids: [0,1]
 
 #### datasets
 datasets:
   train:
     name: train
     mode: LQGT
-    aug: noise
-    noise_data: ../datasets/DF2K/Corrupted_noise/
-    dataroot_GT: ../datasets/DF2K/generated_kernel/tdsr/HR
-    dataroot_LQ: ../datasets/DF2K/generated_kernel/tdsr/LR
+    aug: ~
+    # noise_data: ../datasets/DF2K/Corrupted_noise/
+    dataroot_GT: ../datasets/DF2K/generated/tdsr/HR
+    dataroot_LQ: ../datasets/DF2K/generated/tdsr/LR
     use_shuffle: true
     n_workers: 6  # per GPU
     batch_size: 10

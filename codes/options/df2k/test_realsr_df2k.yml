@@ -8,7 +8,7 @@ gpu_ids: [0]
 
 datasets:
   test_1:  # the 1st test dataset
-    name: DIV2K_Kernel
+    name: DIV2K_WithoutN
     mode: LQGT
     dataroot_LR: ../../datasets/ntire20/Corrupted-va-x
     dataroot_GT: ../../datasets/ntire20/Corrupted-va-y
@@ -24,5 +24,5 @@ network_G:
 
 #### path
 path:
-  pretrain_model_G: ../experiments/RealSR_Kernel/models/latest_G.pth
+  pretrain_model_G: ../experiments/RealSR_WithoutN/models/latest_G.pth
   results_root: ../results/

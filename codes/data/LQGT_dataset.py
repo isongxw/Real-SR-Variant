@@ -64,7 +64,7 @@ class LQGTDataset(data.Dataset):
         # modcrop in the validation / test phase
         if self.opt['phase'] != 'train':
             img_GT = util.modcrop(img_GT, scale*2)
-            print(GT_path.split("/")[-1], "origin: ", img_GT.shape)
+            # print(GT_path.split("/")[-1], "origin: ", img_GT.shape)
             # img_GT = img_GT[200:-200, 200:-200, :]k
             # print("cropped: ", img_GT.shape)
         # change color space if necessary

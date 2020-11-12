@@ -12,6 +12,9 @@ import torch
 from torchvision.utils import make_grid
 from shutil import get_terminal_size
 import lpips
+import smtplib
+from email.mime.text import MIMEText
+from email.header import Header
 
 import yaml
 try:
@@ -90,6 +93,30 @@ def setup_logger(logger_name, root, phase, level=logging.INFO, screen=False, tof
         sh.setFormatter(formatter)
         lg.addHandler(sh)
 
+
+def email_notification(receiver, subject, content):
+    '''email notification'''
+    mail_host="smtp.qq.com"  #设置服务器
+    mail_user="isongxw@foxmail.com"    #用户名
+    mail_pass="vbpofpiwrtgrghii"   #口令 
+    
+    sender = 'isongxw@foxmail.com'
+
+    message = MIMEText(content, 'plain', 'utf-8')
+    message['From'] = "isongxw@foxmail.com"
+    message['To'] = "isongxw@foxmail.com"
+
+    message['Subject'] = Header(subject, 'utf-8')
+    logger = logging.getLogger('base')
+    
+    try:
+        smtpObj = smtplib.SMTP() 
+        smtpObj.connect(mail_host, 25)    # 25 为 SMTP 端口号
+        smtpObj.login(mail_user,mail_pass)
+        smtpObj.sendmail(sender, receiver, message.as_string())
+        logger.info("Email notification succeeded")
+    except smtplib.SMTPException:
+        logger.info("Email notification failed")
 
 ####################
 # image convert

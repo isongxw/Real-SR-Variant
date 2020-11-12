@@ -132,3 +132,6 @@ for test_loader in test_loaders:
             logger.info(
                 '----Y channel, average PSNR/SSIM/LPIPS----\n\tPSNR_Y: {:.6f} dB; SSIM_Y: {:.6f}\n'.
                 format(ave_psnr_y, ave_ssim_y))
+        
+        util.email_notification("isongxw@foxmail.com", "Test Finished: " + test_set_name, '----Average PSNR/SSIM/LPIPS results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f}; LPIPS: {:.6f}\n'.format(
+                test_set_name, ave_psnr, ave_ssim, ave_lpips))

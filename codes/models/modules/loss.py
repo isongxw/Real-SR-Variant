@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import kornia
 
 class CharbonnierLoss(nn.Module):
     """Charbonnier Loss (L1)"""
@@ -13,6 +13,27 @@ class CharbonnierLoss(nn.Module):
         diff = x - y
         loss = torch.sum(torch.sqrt(diff * diff + self.eps))
         return loss
+
+
+class EdgeAwareLoss(nn.Module):
+    """Edge-Aware Loss"""
+
+    def __init__(self, eps=1e-6, sig = 0.1, lam=0.1):
+        super(EdgeAwareLoss, self).__init__()
+        self.eps = eps
+        self.sig = sig
+        self.lam = lam
+    
+    def forward(self, x, y):
+        diff = x - y
+        charbonnier = torch.sqrt(diff * diff + self.eps)
+        laplace = kornia.filters.Laplacian(5)
+        edge_x = laplace(x)
+        Bt = (edge_x >= self.sig) * 1
+        loss = charbonnier + self.lam * torch.abs(Bt * diff)
+        return loss.mean()
+
+
 
 
 # Define GAN loss: [vanilla | lsgan | wgan-gp]

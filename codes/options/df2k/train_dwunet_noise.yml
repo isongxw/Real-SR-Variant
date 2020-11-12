@@ -1,5 +1,5 @@
 #### general settings
-name: RealSR_DWUNet_WithoutN
+name: RealSR_DWUNet_WithoutN_EdgeAwareLoss
 use_tb_logger: true
 model: srgan
 distortion: sr
@@ -64,7 +64,7 @@ train:
   lr_steps: [5000, 10000, 20000, 30000]
   lr_gamma: 0.5
 
-  pixel_criterion: l1
+  pixel_criterion: edge_aware
   pixel_weight: !!float 1e-2  # 1
   feature_criterion: l1
   feature_weight: 1

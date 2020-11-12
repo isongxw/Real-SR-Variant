@@ -8,6 +8,7 @@ import models.networks as networks
 import models.lr_scheduler as lr_scheduler
 from .base_model import BaseModel
 from models.modules.loss import GANLoss
+from models.modules.loss import EdgeAwareLoss
 
 logger = logging.getLogger('base')
 
@@ -47,6 +48,8 @@ class SRGANModel(BaseModel):
                     self.cri_pix = nn.L1Loss().to(self.device)
                 elif l_pix_type == 'l2':
                     self.cri_pix = nn.MSELoss().to(self.device)
+                elif l_pix_type == 'edge_aware':
+                    self.cri_pix = EdgeAwareLoss().to(self.device)
                 else:
                     raise NotImplementedError('Loss type [{:s}] not recognized.'.format(l_pix_type))
                 self.l_pix_w = train_opt['pixel_weight']

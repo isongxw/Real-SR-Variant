@@ -6,21 +6,21 @@
 ## Init - Actober 16, 2020
 - Init repository from [RealSR](https://github.com/Tencent/Real-SR)
 
-# Quantitative Results Compared with Other Participating Methods [RealSR]
+# Quantitative Results So Far [RealSR]
 
-'Impressionism' is our team. Note that the final decision is based on MOS (Mean Opinion Score) and MOR (Mean Opinion Rank).
+The best results so far are shown in bold
 
-![0](figures/track1.png)
-
-![1](figures/track2.png)
-
-# Qualitative Results Compared with Other Participating Methods [RealSR]
-
-'Impressionism' is our team. 
-
-![0](figures/df2k.png)
-
-![1](figures/dped.png)
+| Network |    Dataset/Train    | Dataset/Test | PSNR  | SSIM | LPIPS | PSNR_Y | SSIM_Y |
+| ----    | ----                | ----         | ----  | ---- | ----  | ----   | ----   |
+| SRFBN   | Track1              | Track1_Val   | **27.78** | **0.73** | 0.51  | None   | None   |
+| SPSR    | Track1              | Track1_Val   | 20.72 | 0.34 | 0.57  | None   | None   |
+| RealSR  | Track1_Noise        | Track1_Val   | 24.79 | 0.69 | 0.34  | 26.60  | 0.74   |
+| RealSR  | Track1_Kernel_Noise | Track1_Val   | 18.56 | 0.49 | 0.44  | None   | None   |
+| RealSR  | Track1_Kernel       | Track1_Val   | 19.23 | 0.46 | 0.45  | 20.87  | 0.52   |
+| RealSR  | Track1              | Track1_Val   | 25.39 | 0.69 | 0.31  | 27.08  | 0.74   |
+| DWSR    | Track1_Noise        | Track1_Val   | 25.44 | 0.71 | 0.31  | 27.03  | 0.75   |
+| DWSR    | Track1              | Track1_Val   | 23.64 | 0.70 | **0.27**  | **27.25**  | **0.75**   |
+| DWSR_EdgeLoss|Track1          | Track1_Val   | running|
 
 
 
@@ -28,7 +28,7 @@
 This code is based on [BasicSR](https://github.com/xinntao/BasicSR).
 
 - Python 3 (Recommend to use [Anaconda](https://www.anaconda.com/download/#linux))
-- [PyTorch >= 1.0](https://pytorch.org/)
+- [PyTorch >= 1.6](https://pytorch.org/)
 - NVIDIA GPU + [CUDA](https://developer.nvidia.com/cuda-downloads)
 - Python packages: `pip install numpy opencv-python lmdb pyyaml`
 - TensorBoard: 

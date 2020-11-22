@@ -41,7 +41,7 @@ This code is based on [BasicSR](https://github.com/xinntao/BasicSR).
     - [DPED](https://drive.google.com/open?id=1zZIuQSepFlupV103AatoP-JSJpwJFS19) for real images taken by cell phone camera.
 - Extended models
     - [DF2K-JPEG](https://drive.google.com/open?id=1w8QbCLM6g-MMVlIhRERtSXrP-Dh7cPhm) for compressed jpeg image. 
- 
+
 ## Testing
 Download dataset from [NTIRE 2020 RWSR](https://competitions.codalab.org/competitions/22220#participate) and unzip it to your path.
 
@@ -57,7 +57,7 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
  2. Run command :
  ```CUDA_VISIBLE_DEVICES=X python3 test.py -opt options/df2k/test_df2k.yml ```
  3. The output images is saved in '../results/'
- 
+
 ### DPED: Smartphone images 
  1. Modify the configuration file options/dped/test_dped.yml
     - line 1 : 'name' -- dir name for saving the testing results
@@ -66,7 +66,7 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
  2. Run command :
  ```CUDA_VISIBLE_DEVICES=X python3 test.py -opt options/dped/test_dped.yml```
  3. The output images is saved in '../results/'
- 
+
 
 ## Training
 
@@ -90,7 +90,7 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
         ``` 
       cd KernelGAN
       python3 train.py --X4 --input-dir SOURCE_PATH
-        ```
+      ```
     
     - specify dataset paths in './preprocess/path.yml' and generated KERNEL_PATH to kernel create kernel dataset:
     ```python3 ./preprocess/create_kernel_dataset.py --dataset dped --artifacts clean --kernel_path KERNEL_PATH```
@@ -103,5 +103,5 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
     - run command :
     ```python3 train.py -opt options/dped/train_kernel_noise.yml```
     - checkpoint dir is in '../experiments'
- 
+
  

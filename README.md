@@ -20,7 +20,8 @@ The best results so far are shown in bold
 | RealSR  | Track1              | Track1_Val   | 25.39 | 0.69 | 0.31  | 27.08  | 0.74   |
 | DWSR    | Track1_Noise        | Track1_Val   | 25.44 | 0.71 | 0.31  | 27.03  | 0.75   |
 | DWSR    | Track1              | Track1_Val   | 23.64 | 0.70 | **0.27**  | **27.25**  | **0.75**   |
-| DWSR_EdgeLoss|Track1          | Track1_Val   | running|
+| DWSR_EdgeLoss|Track1          | Track1_Val   | 25.88 | 0.71 | 0.27  | 27.49  | 0.75   |
+| DWSR_EdgeLoss_w1|Track1          | Track1_Val   | 25.80 | 0.70 | 0.27  | 27.43  | 0.74   |
 
 
 

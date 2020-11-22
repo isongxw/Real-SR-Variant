@@ -22,6 +22,7 @@ The best results so far are shown in bold
 | DWSR    | Track1              | Track1_Val   | 23.64 | 0.70 | **0.27**  | **27.25**  | **0.75**   |
 | DWSR_EdgeLoss|Track1          | Track1_Val   | 25.88 | 0.71 | 0.27  | 27.49  | 0.75   |
 | DWSR_EdgeLoss_w1|Track1          | Track1_Val   | 25.80 | 0.70 | 0.27  | 27.43  | 0.74   |
+| DWSR_EdgeLoss_12000 |Track1 | Track1_Val | 26.30 | 0.72 | 0.256 | 27.92 | 0.76 |
 
 
 

@@ -104,6 +104,7 @@ For convenient, we provide [Corrupted-te-x](https://drive.google.com/open?id=1Gr
     - Modify the configuration file options/dped/train_kernel_noise.yml
     - run command :
     ```python3 train.py -opt options/dped/train_kernel_noise.yml```
-    - checkpoint dir is in '../experiments'
+    - checkpoint dir is in '../experiments' 
 
- 
+ ## Acknowledgements
+- Thanks to [xinntao](https://github.com/xinntao) for contributing the training and testing code of [ESRGAN](https://github.com/xinntao/BasicSR)

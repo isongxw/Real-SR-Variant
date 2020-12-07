@@ -3,13 +3,12 @@ import logging
 import time
 import argparse
 from collections import OrderedDict
-
 import options.options as option
 import utils.util as util
 from data.util import bgr2ycbcr
 from data import create_dataset, create_dataloader
 from models import create_model
-
+import options.options as option
 #### options
 parser = argparse.ArgumentParser()
 parser.add_argument('-opt', type=str, required=True, help='Path to options YMAL file.')

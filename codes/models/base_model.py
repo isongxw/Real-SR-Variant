@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 from torch.nn.parallel import DistributedDataParallel
 
-
 class BaseModel():
     def __init__(self, opt):
         self.opt = opt

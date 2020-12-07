@@ -1,10 +1,10 @@
 #### general settings
-name: RealSR_DWUNet_WithoutN_EdgeAwareLoss
+name: RealSR_DWUNet_patchD
 use_tb_logger: true
 model: srgan
 distortion: sr
 scale: 4
-gpu_ids: [0,1]
+gpu_ids: [3]
 
 #### datasets
 datasets:
@@ -12,21 +12,15 @@ datasets:
     name: train
     mode: LQGT
     aug: ~
-    # noise_data: ../datasets/DF2K/Corrupted_noise/
     dataroot_GT: ../datasets/DF2K/generated/tdsr/HR
     dataroot_LQ: ../datasets/DF2K/generated/tdsr/LR
     use_shuffle: true
     n_workers: 6  # per GPU
-    batch_size: 10
-    GT_size: 128
+    batch_size: 8
+    GT_size: 512
     use_flip: true
     use_rot: true
     color: RGB
-#  val:
-#    name: val
-#    mode: LQGT
-#    dataroot_GT: ../../../ntire20/DIV2K_valid_HR
-#    dataroot_LQ: ../../../ntire20/Corrupted-va-x
 
 #### network structures
 network_G:
@@ -36,13 +30,13 @@ network_G:
   nf: 64
   nb: 23
 network_D:
-  which_model_D: discriminator_vgg_128
+  which_model_D: NLayerDiscriminator  # 修改GT_size时需要同时修改D的网络结构
   in_nc: 3
   nf: 64
+  nlayer: 3
 
 #### path
 path:
-  #pretrain_model_G: ../pretrained_model/RRDB_PSNR_x4.pth
   experiments_root: experiments/
   strict_load: true
   resume_state: ~
@@ -61,6 +55,7 @@ train:
 
   niter: 60001
   warmup_iter: -1  # no warm up
+  # lr_steps: [5000, 20000, 30000, 50000, 80000, 150000]
   lr_steps: [5000, 10000, 20000, 30000]
   lr_gamma: 0.5
 

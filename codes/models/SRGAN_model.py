@@ -206,7 +206,7 @@ class SRGANModel(BaseModel):
         self.netG.eval()
         with torch.no_grad():
             self.fake_H = self.netG(self.var_L)
-        self.netG.train()
+        # self.netG.train()
 
     def back_projection(self):
         lr_error = self.var_L - torch.nn.functional.interpolate(self.fake_H,

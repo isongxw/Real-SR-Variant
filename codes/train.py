@@ -13,6 +13,7 @@ from utils import util
 from data import create_dataloader, create_dataset
 from models import create_model
 
+
 def init_dist(backend='nccl', **kwargs):
     ''' initialization for distributed training'''
     # if mp.get_start_method(allow_none=True) is None:
@@ -25,7 +26,7 @@ def init_dist(backend='nccl', **kwargs):
 
 
 def main():
-    #### options
+    # options
     parser = argparse.ArgumentParser()
     parser.add_argument('-opt', type=str, help='Path to option YMAL file.')
     parser.add_argument('--launcher', choices=['none', 'pytorch'], default='none',
@@ -34,7 +35,7 @@ def main():
     args = parser.parse_args()
     opt = option.parse(args.opt, is_train=True)
 
-    #### distributed training settings
+    # distributed training settings
     if args.launcher == 'none':  # disabled distributed training
         opt['dist'] = False
         rank = -1
@@ -204,7 +205,6 @@ def main():
                     cropped_sr_img = sr_img[crop_size:-crop_size, crop_size:-crop_size, :]
                     cropped_gt_img = gt_img[crop_size:-crop_size, crop_size:-crop_size, :]
                     avg_psnr += util.calculate_psnr(cropped_sr_img * 255, cropped_gt_img * 255)
-
 
                 avg_psnr = avg_psnr / idx
                 val_pix_err_f /= idx

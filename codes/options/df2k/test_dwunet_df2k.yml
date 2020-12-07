@@ -5,11 +5,11 @@ distortion: sr
 scale: 4
 crop_border: 0  # crop border when evaluation. If None(~), crop the scale pixels
 gpu_ids: [0]
-large: True
+large: True     # 测试图片较大，进行裁剪后再测试
 
 datasets:
   test_1:  # the 1st test dataset
-    name: RealSR_DWUNet_test
+    name: RealSR_DWUNet_patchD
     mode: LQGT
     dataroot_LR: /mnt/02520c27-ec8e-4661-b88f-05aa2011ffa7/ntire-sr-dataset/val_LR
     dataroot_GT: /mnt/02520c27-ec8e-4661-b88f-05aa2011ffa7/ntire-sr-dataset/val
@@ -25,5 +25,5 @@ network_G:
 
 #### path
 path:
-  pretrain_model_G: ../experiments/RealSR_DWUNet_test/models/latest_G.pth
+  pretrain_model_G: ../experiments/RealSR_DWUNet_patchD/models/latest_G.pth
   results_root: ../results/

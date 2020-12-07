@@ -7,7 +7,7 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 import models.networks as networks
 import models.lr_scheduler as lr_scheduler
 from .base_model import BaseModel
-from models.modules.loss import CharbonnierLoss
+from models.modules.loss import CharbonnierLoss, EdgeAwareLoss
 
 logger = logging.getLogger('base')
 
@@ -43,6 +43,8 @@ class SRModel(BaseModel):
                 self.cri_pix = nn.MSELoss().to(self.device)
             elif loss_type == 'cb':
                 self.cri_pix = CharbonnierLoss().to(self.device)
+            elif loss_type == 'edge_aware':
+                self.cri_pix = EdgeAwareLoss().to(self.device)
             else:
                 raise NotImplementedError('Loss type [{:s}] is not recognized.'.format(loss_type))
             self.l_pix_w = train_opt['pixel_weight']
@@ -58,7 +60,7 @@ class SRModel(BaseModel):
                         logger.warning('Params [{:s}] will not optimize.'.format(k))
             self.optimizer_G = torch.optim.Adam(optim_params, lr=train_opt['lr_G'],
                                                 weight_decay=wd_G,
-                                                betas=(train_opt['beta1'], train_opt['beta2']))
+                                                betas=(train_opt['beta1_G'], train_opt['beta2_G']))
             self.optimizers.append(self.optimizer_G)
 
             # schedulers

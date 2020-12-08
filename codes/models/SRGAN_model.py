@@ -1,5 +1,6 @@
 import logging
 from collections import OrderedDict
+import os
 import torch
 import torch.nn as nn
 import torch.nn.parallel as P
@@ -7,10 +8,11 @@ from torch.nn.parallel import DataParallel, DistributedDataParallel
 import models.networks as networks
 import models.lr_scheduler as lr_scheduler
 from .base_model import BaseModel
-from models.modules.loss import GANLoss
-from models.modules.loss import EdgeAwareLoss
+from models.modules.loss import GANLoss, EdgeAwareLoss, MyOwnLoss
+from models.modules.PixelShuffleModel import PSUpsample
 
 logger = logging.getLogger('base')
+
 
 class SRGANModel(BaseModel):
     def __init__(self, opt):
@@ -23,10 +25,15 @@ class SRGANModel(BaseModel):
 
         # define networks and load pretrained models
         self.netG = networks.define_G(opt).to(self.device)
+        self.netPS = PSUpsample().to(self.device)
+
         if opt['dist']:
             self.netG = DistributedDataParallel(self.netG, device_ids=[torch.cuda.current_device()])
+            self.netPS = DistributedDataParallel(self.netPS, device_ids=[torch.cuda.current_device()])
         else:
             self.netG = DataParallel(self.netG)
+            self.netPS = DataParallel(self.netPS)
+
         if self.is_train:
             self.netD = networks.define_D(opt).to(self.device)
             if opt['dist']:
@@ -35,12 +42,16 @@ class SRGANModel(BaseModel):
             else:
                 self.netD = DataParallel(self.netD)
 
+            self.netPS.train()
             self.netG.train()
             self.netD.train()
 
         # define losses, optimizer and scheduler
         if self.is_train:
-
+            # PS
+            self.ps_loss = MyOwnLoss().to(self.device)
+            self.ps_init_iters = train_opt['PS_init_iter']
+            self.optimizer_PS = torch.optim.Adam(self.netPS.parameters(), lr=train_opt['lr_G'], weight_decay=1e-4, betas=(train_opt['beta1_G'], train_opt['beta2_G']))
             # G pixel loss
             if train_opt['pixel_weight'] > 0:
                 l_pix_type = train_opt['pixel_criterion']
@@ -95,12 +106,15 @@ class SRGANModel(BaseModel):
                 else:
                     if self.rank <= 0:
                         logger.warning('Params [{:s}] will not optimize.'.format(k))
+
             self.optimizer_G = torch.optim.Adam(optim_params, lr=train_opt['lr_G'],
                                                 weight_decay=wd_G,
                                                 betas=(train_opt['beta1_G'], train_opt['beta2_G']))
             self.optimizers.append(self.optimizer_G)
+
             # D
             wd_D = train_opt['weight_decay_D'] if train_opt['weight_decay_D'] else 0
+
             self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=train_opt['lr_D'],
                                                 weight_decay=wd_D,
                                                 betas=(train_opt['beta1_D'], train_opt['beta2_D']))
@@ -137,70 +151,89 @@ class SRGANModel(BaseModel):
             self.var_ref = input_ref.to(self.device)
 
     def optimize_parameters(self, step):
-        # G
-        for p in self.netD.parameters():
-            p.requires_grad = False
+        # PS
+        if step <= self.ps_init_iters:
+            ps_sr = self.netPS(self.var_L.detach())
+            l_ps_loss = self.ps_loss(ps_sr, self.var_H)
 
-        self.optimizer_G.zero_grad()
-        self.fake_H = self.netG(self.var_L.detach())
+            self.optimizer_PS.zero_grad()
+            l_ps_loss.backward()
+            self.optimizer_PS.step()
+            # set log
+            self.log_dict['l_ps_loss'] = l_ps_loss.item()
 
-        l_g_total = 0
-        if step % self.D_update_ratio == 0 and step > self.D_init_iters:
-            if self.cri_pix:  # pixel loss
-                l_g_pix = self.l_pix_w * self.cri_pix(self.fake_H, self.var_H)
-                l_g_total += l_g_pix
-            if self.cri_fea:  # feature loss
-                real_fea = self.netF(self.var_H).detach()
-                fake_fea = self.netF(self.fake_H)
-                l_g_fea = self.l_fea_w * self.cri_fea(fake_fea, real_fea)
-                l_g_total += l_g_fea
+            if step == self.ps_init_iters:
+                self.save_network(self.netPS, 'PS', 'pre')
 
-            pred_g_fake = self.netD(self.fake_H)
+        else:
+            # G
+            for p in self.netD.parameters():
+                p.requires_grad = False
+            l_g_total = 0
+            if step % self.D_update_ratio == 0 and step > self.D_init_iters:
+                self.load_network(os.path.join(self.opt['path']['models'], 'pre_PS.pth'), self.netPS)
+                # self.netPS.load_state_dict(torch.load(os.path.join(self.opt['path']['models'], 'pre_PS.pth')))
+                self.netPS.eval()
+                self.var_M = self.netPS(self.var_L.detach())
+                self.var_M = self.var_M.clamp(0.0, 1.0)
+
+                self.optimizer_G.zero_grad()
+                self.fake_H = self.netG(self.var_M.detach())
+
+                if self.cri_pix:  # pixel loss
+                    l_g_pix = self.l_pix_w * self.cri_pix(self.fake_H, self.var_H)
+                    l_g_total += l_g_pix
+                if self.cri_fea:  # feature loss
+                    real_fea = self.netF(self.var_H).detach()
+                    fake_fea = self.netF(self.fake_H)
+                    l_g_fea = self.l_fea_w * self.cri_fea(fake_fea, real_fea)
+                    l_g_total += l_g_fea
+
+                pred_g_fake = self.netD(self.fake_H)
+                if self.opt['train']['gan_type'] == 'gan':
+                    l_g_gan = self.l_gan_w * self.cri_gan(pred_g_fake, True)
+                elif self.opt['train']['gan_type'] == 'ragan':
+                    pred_d_real = self.netD(self.var_ref).detach()
+                    l_g_gan = self.l_gan_w * (
+                        self.cri_gan(pred_d_real - torch.mean(pred_g_fake), False) +
+                        self.cri_gan(pred_g_fake - torch.mean(pred_d_real), True)) / 2
+                l_g_total += l_g_gan
+
+                l_g_total.backward()
+                self.optimizer_G.step()
+
+            # D
+            for p in self.netD.parameters():
+                p.requires_grad = True
+
+            self.optimizer_D.zero_grad()
+            l_d_total = 0
+            pred_d_real = self.netD(self.var_ref)
+            pred_d_fake = self.netD(self.fake_H.detach())   # detach to avoid BP to G
             if self.opt['train']['gan_type'] == 'gan':
-                l_g_gan = self.l_gan_w * self.cri_gan(pred_g_fake, True)
+                l_d_real = self.cri_gan(pred_d_real, True)
+                l_d_fake = self.cri_gan(pred_d_fake, False)
+                l_d_total = l_d_real + l_d_fake
             elif self.opt['train']['gan_type'] == 'ragan':
-                pred_d_real = self.netD(self.var_ref).detach()
-                l_g_gan = self.l_gan_w * (
-                    self.cri_gan(pred_d_real - torch.mean(pred_g_fake), False) +
-                    self.cri_gan(pred_g_fake - torch.mean(pred_d_real), True)) / 2
-            l_g_total += l_g_gan
+                l_d_real = self.cri_gan(pred_d_real - torch.mean(pred_d_fake), True)
+                l_d_fake = self.cri_gan(pred_d_fake - torch.mean(pred_d_real), False)
+                l_d_total = (l_d_real + l_d_fake) / 2
 
-            l_g_total.backward()
-            self.optimizer_G.step()
+            l_d_total.backward()
+            self.optimizer_D.step()
+            # set log
+            if step % self.D_update_ratio == 0 and step > self.D_init_iters:
+                if self.cri_pix:
+                    self.log_dict['l_g_pix'] = l_g_pix.item()
+                    # self.log_dict['l_g_mean_color'] = l_g_mean_color.item()
+                if self.cri_fea:
+                    self.log_dict['l_g_fea'] = l_g_fea.item()
+                self.log_dict['l_g_gan'] = l_g_gan.item()
 
-        # D
-        for p in self.netD.parameters():
-            p.requires_grad = True
-
-        self.optimizer_D.zero_grad()
-        l_d_total = 0
-        pred_d_real = self.netD(self.var_ref)
-        pred_d_fake = self.netD(self.fake_H.detach())  # detach to avoid BP to G
-        if self.opt['train']['gan_type'] == 'gan':
-            l_d_real = self.cri_gan(pred_d_real, True)
-            l_d_fake = self.cri_gan(pred_d_fake, False)
-            l_d_total = l_d_real + l_d_fake
-        elif self.opt['train']['gan_type'] == 'ragan':
-            l_d_real = self.cri_gan(pred_d_real - torch.mean(pred_d_fake), True)
-            l_d_fake = self.cri_gan(pred_d_fake - torch.mean(pred_d_real), False)
-            l_d_total = (l_d_real + l_d_fake) / 2
-
-        l_d_total.backward()
-        self.optimizer_D.step()
-
-        # set log
-        if step % self.D_update_ratio == 0 and step > self.D_init_iters:
-            if self.cri_pix:
-                self.log_dict['l_g_pix'] = l_g_pix.item()
-                # self.log_dict['l_g_mean_color'] = l_g_mean_color.item()
-            if self.cri_fea:
-                self.log_dict['l_g_fea'] = l_g_fea.item()
-            self.log_dict['l_g_gan'] = l_g_gan.item()
-
-        self.log_dict['l_d_real'] = l_d_real.item()
-        self.log_dict['l_d_fake'] = l_d_fake.item()
-        self.log_dict['D_real'] = torch.mean(pred_d_real.detach())
-        self.log_dict['D_fake'] = torch.mean(pred_d_fake.detach())
+            self.log_dict['l_d_real'] = l_d_real.item()
+            self.log_dict['l_d_fake'] = l_d_fake.item()
+            self.log_dict['D_real'] = torch.mean(pred_d_real.detach())
+            self.log_dict['D_fake'] = torch.mean(pred_d_fake.detach())
 
     def test(self):
         self.netG.eval()
@@ -257,7 +290,8 @@ class SRGANModel(BaseModel):
                 # print(len(x))
                 # print(x[0].size())
                 y = P.data_parallel(self.netG, *x, range(n_GPUs))
-                if not isinstance(y, list): y = [y]
+                if not isinstance(y, list):
+                    y = [y]
                 if not y_chops:
                     y_chops = [[c for c in _y.chunk(n_GPUs, dim=0)] for _y in y]
                 else:
@@ -270,11 +304,13 @@ class SRGANModel(BaseModel):
                 # print('len(p)', len(p))
                 # print('p[0].size()', p[0].size())
                 y = self.forward_chop(*p, shave=shave, min_size=min_size)
-                if not isinstance(y, list): y = [y]
+                if not isinstance(y, list):
+                    y = [y]
                 if not y_chops:
                     y_chops = [[_y] for _y in y]
                 else:
-                    for y_chop, _y in zip(y_chops, y): y_chop.append(_y)
+                    for y_chop, _y in zip(y_chops, y):
+                        y_chop.append(_y)
 
         h *= scale
         w *= scale

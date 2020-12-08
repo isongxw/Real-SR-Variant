@@ -1,6 +1,6 @@
 import logging
 from collections import OrderedDict
-
+import torch.nn.parallel as P
 import torch
 import torch.nn as nn
 from torch.nn.parallel import DataParallel, DistributedDataParallel
@@ -103,6 +103,88 @@ class SRModel(BaseModel):
         with torch.no_grad():
             self.fake_H = self.netG(self.var_L)
         self.netG.train()
+
+    def test_chop(self):
+        self.netG.eval()
+        with torch.no_grad():
+            self.fake_H = self.forward_chop(self.var_L)
+        self.netG.train()
+
+    def forward_chop(self, *args, shave=10, min_size=160000):
+        # scale = 1 if self.input_large else self.scale[self.idx_scale]
+        scale = self.opt['scale']
+        n_GPUs = min(torch.cuda.device_count(), 4)
+        args = [a.squeeze().unsqueeze(0) for a in args]
+
+        # height, width
+        h, w = args[0].size()[-2:]
+        # print('len(args)', len(args))
+        # print('args[0].size()', args[0].size())
+
+        top = slice(0, h//2 + shave)
+        bottom = slice(h - h//2 - shave, h)
+        left = slice(0, w//2 + shave)
+        right = slice(w - w//2 - shave, w)
+        x_chops = [torch.cat([
+            a[..., top, left],
+            a[..., top, right],
+            a[..., bottom, left],
+            a[..., bottom, right]
+        ]) for a in args]
+        # print('len(x_chops)', len(x_chops))
+        # print('x_chops[0].size()', x_chops[0].size())
+
+        y_chops = []
+        if h * w < 4 * min_size:
+            for i in range(0, 4, n_GPUs):
+                x = [x_chop[i:(i + n_GPUs)] for x_chop in x_chops]
+                # print(len(x))
+                # print(x[0].size())
+                y = P.data_parallel(self.netG, *x, range(n_GPUs))
+                if not isinstance(y, list):
+                    y = [y]
+                if not y_chops:
+                    y_chops = [[c for c in _y.chunk(n_GPUs, dim=0)] for _y in y]
+                else:
+                    for y_chop, _y in zip(y_chops, y):
+                        y_chop.extend(_y.chunk(n_GPUs, dim=0))
+        else:
+
+            # print(x_chops[0].size())
+            for p in zip(*x_chops):
+                # print('len(p)', len(p))
+                # print('p[0].size()', p[0].size())
+                y = self.forward_chop(*p, shave=shave, min_size=min_size)
+                if not isinstance(y, list):
+                    y = [y]
+                if not y_chops:
+                    y_chops = [[_y] for _y in y]
+                else:
+                    for y_chop, _y in zip(y_chops, y):
+                        y_chop.append(_y)
+
+        h *= scale
+        w *= scale
+        top = slice(0, h//2)
+        bottom = slice(h - h//2, h)
+        bottom_r = slice(h//2 - h, None)
+        left = slice(0, w//2)
+        right = slice(w - w//2, w)
+        right_r = slice(w//2 - w, None)
+
+        # batch size, number of color channels
+        b, c = y_chops[0][0].size()[:-2]
+        y = [y_chop[0].new(b, c, h, w) for y_chop in y_chops]
+        for y_chop, _y in zip(y_chops, y):
+            _y[..., top, left] = y_chop[0][..., top, left]
+            _y[..., top, right] = y_chop[1][..., top, right_r]
+            _y[..., bottom, left] = y_chop[2][..., bottom_r, left]
+            _y[..., bottom, right] = y_chop[3][..., bottom_r, right_r]
+
+        if len(y) == 1:
+            y = y[0]
+
+        return y
 
     def test_x8(self):
         # from https://github.com/thstkdgus35/EDSR-PyTorch

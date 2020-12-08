@@ -65,7 +65,8 @@ def mkdir_and_rename(path):
         new_name = path + '_archived_' + get_timestamp()
         print('Path already exists. Rename it to [{:s}]'.format(new_name))
         logger = logging.getLogger('base')
-        logger.info('Path already exists. Rename it to [{:s}]'.format(new_name))
+        logger.info(
+            'Path already exists. Rename it to [{:s}]'.format(new_name))
         os.rename(path, new_name)
     os.makedirs(path)
 
@@ -84,7 +85,8 @@ def setup_logger(logger_name, root, phase, level=logging.INFO, screen=False, tof
                                   datefmt='%y-%m-%d %H:%M:%S')
     lg.setLevel(level)
     if tofile:
-        log_file = os.path.join(root, phase + '_{}.log'.format(get_timestamp()))
+        log_file = os.path.join(
+            root, phase + '_{}.log'.format(get_timestamp()))
         fh = logging.FileHandler(log_file, mode='w')
         fh.setFormatter(formatter)
         lg.addHandler(fh)
@@ -96,10 +98,10 @@ def setup_logger(logger_name, root, phase, level=logging.INFO, screen=False, tof
 
 def email_notification(receiver, subject, content):
     '''email notification'''
-    mail_host="smtp.qq.com"  #设置服务器
-    mail_user="isongxw@foxmail.com"    #用户名
-    mail_pass="vbpofpiwrtgrghii"   #口令 
-    
+    mail_host = "smtp.qq.com"  # 设置服务器
+    mail_user = "isongxw@foxmail.com"  # 用户名
+    mail_pass = "vbpofpiwrtgrghii"  # 口令
+
     sender = 'isongxw@foxmail.com'
 
     message = MIMEText(content, 'plain', 'utf-8')
@@ -108,11 +110,11 @@ def email_notification(receiver, subject, content):
 
     message['Subject'] = Header(subject, 'utf-8')
     logger = logging.getLogger('base')
-    
+
     try:
-        smtpObj = smtplib.SMTP() 
+        smtpObj = smtplib.SMTP()
         smtpObj.connect(mail_host, 25)    # 25 为 SMTP 端口号
-        smtpObj.login(mail_user,mail_pass)
+        smtpObj.login(mail_user, mail_pass)
         smtpObj.sendmail(sender, receiver, message.as_string())
         logger.info("Email notification succeeded")
     except smtplib.SMTPException:
@@ -130,11 +132,13 @@ def tensor2img(tensor, out_type=np.uint8, min_max=(0, 1)):
     Output: 3D(H,W,C) or 2D(H,W), [0,255], np.uint8 (default)
     '''
     tensor = tensor.squeeze().float().cpu().clamp_(*min_max)  # clamp
-    tensor = (tensor - min_max[0]) / (min_max[1] - min_max[0])  # to range [0,1]
+    tensor = (tensor - min_max[0]) / \
+        (min_max[1] - min_max[0])  # to range [0,1]
     n_dim = tensor.dim()
     if n_dim == 4:
         n_img = len(tensor)
-        img_np = make_grid(tensor, nrow=int(math.sqrt(n_img)), normalize=False).numpy()
+        img_np = make_grid(tensor, nrow=int(
+            math.sqrt(n_img)), normalize=False).numpy()
         img_np = np.transpose(img_np[[2, 1, 0], :, :], (1, 2, 0))  # HWC, BGR
     elif n_dim == 3:
         img_np = tensor.numpy()
@@ -160,17 +164,18 @@ def save_img(img, img_path, mode='RGB'):
 
 
 def calculate_lpips(img1, img2):
-    #img1 and img2 have range [0, 255]
+    # img1 and img2 have range [0, 255]
     loss_fn_vgg = lpips.LPIPS(net='vgg')
     img1 = img1[np.newaxis, :]
     img2 = img2[np.newaxis, :]
 
-    img1 = img1.transpose(0,3,2,1)
-    img2 = img2.transpose(0,3,2,1)
+    img1 = img1.transpose(0, 3, 2, 1)
+    img2 = img2.transpose(0, 3, 2, 1)
 
     img1 = torch.from_numpy(2 * (img1/255) - 1).float()
     img2 = torch.from_numpy(2 * (img2/255) - 1).float()
     return loss_fn_vgg(img1, img2).detach().numpy().flatten()[0]
+
 
 def calculate_psnr(img1, img2):
     # img1 and img2 have range [0, 255]
@@ -234,7 +239,8 @@ class ProgressBar(object):
     def __init__(self, task_num=0, bar_width=50, start=True):
         self.task_num = task_num
         max_bar_width = self._get_max_bar_width()
-        self.bar_width = (bar_width if bar_width <= max_bar_width else max_bar_width)
+        self.bar_width = (bar_width if bar_width <=
+                          max_bar_width else max_bar_width)
         self.completed = 0
         if start:
             self.start()
@@ -267,7 +273,8 @@ class ProgressBar(object):
             mark_width = int(self.bar_width * percentage)
             bar_chars = '>' * mark_width + '-' * (self.bar_width - mark_width)
             sys.stdout.write('\033[2F')  # cursor up 2 lines
-            sys.stdout.write('\033[J')  # clean the output (remove extra chars since last display)
+            # clean the output (remove extra chars since last display)
+            sys.stdout.write('\033[J')
             sys.stdout.write('[{}] {}/{}, {:.1f} task/s, elapsed: {}s, ETA: {:5}s\n{}\n'.format(
                 bar_chars, self.completed, self.task_num, fps, int(elapsed + 0.5), eta, msg))
         else:

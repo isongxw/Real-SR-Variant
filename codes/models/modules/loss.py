@@ -1,6 +1,19 @@
 import torch
 import torch.nn as nn
 import kornia
+import lpips
+
+
+class MyOwnLoss(nn.Module):
+    def __init__(self):
+        super(MyOwnLoss, self).__init__()
+        self.mse = nn.MSELoss()
+        self.lpips = lpips.LPIPS(net='vgg')
+
+    def forward(self, x, y):
+        x1 = (x.clamp(0, 1) - 0.5) * 2
+        y1 = (y.clamp(0, 1) - 0.5) * 2
+        return torch.mean(self.mse(x, y) + self.lpips(x1, y1))
 
 class CharbonnierLoss(nn.Module):
     """Charbonnier Loss (L1)"""

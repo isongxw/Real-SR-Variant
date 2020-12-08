@@ -8,8 +8,9 @@ import utils.util as util
 from data.util import bgr2ycbcr
 from data import create_dataset, create_dataloader
 from models import create_model
-import options.options as option
-#### options
+
+
+# options
 parser = argparse.ArgumentParser()
 parser.add_argument('-opt', type=str, required=True, help='Path to options YMAL file.')
 opt = option.parse(parser.parse_args().opt, is_train=False)
@@ -23,7 +24,7 @@ util.setup_logger('base', opt['path']['log'], 'test_' + opt['name'], level=loggi
 logger = logging.getLogger('base')
 logger.info(option.dict2str(opt))
 
-#### Create test dataset and dataloader
+# Create test dataset and dataloader
 test_loaders = []
 for phase, dataset_opt in sorted(opt['datasets'].items()):
     test_set = create_dataset(dataset_opt)
@@ -52,9 +53,8 @@ for test_loader in test_loaders:
         model.feed_data(data, need_GT=need_GT)
         img_path = data['GT_path'][0] if need_GT else data['LQ_path'][0]
         img_name = osp.splitext(osp.basename(img_path))[0]
-        if opt['model'] == 'sr':
-            model.test_x8()
-        elif opt['large'] is not None:
+
+        if opt['large'] is not None:
             model.test_chop()
         else:
             model.test()
@@ -131,7 +131,7 @@ for test_loader in test_loaders:
             logger.info(
                 '----Y channel, average PSNR/SSIM/LPIPS----\n\tPSNR_Y: {:.6f} dB; SSIM_Y: {:.6f}\n'.
                 format(ave_psnr_y, ave_ssim_y))
-        
+
         util.email_notification("isongxw@foxmail.com", "Test Finished: " + test_set_name, '----Average PSNR/SSIM/LPIPS results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f}; LPIPS: {:.6f}\n'.format(
                 test_set_name, ave_psnr, ave_ssim, ave_lpips) + '----Y channel, average PSNR/SSIM/LPIPS----\n\tPSNR_Y: {:.6f} dB; SSIM_Y: {:.6f}\n'.
                 format(ave_psnr_y, ave_ssim_y))

@@ -1,6 +1,5 @@
 import cv2
 import os
-import numpy
 
 lr_path = "../datasets/ntire20/Corrupted-va-x/"
 hr_path = "../datasets/ntire20/Corrupted-va-y/"
@@ -21,6 +20,3 @@ for name in files:
     # crop hr img
     cv2.imwrite(hr_path + name.replace(".", "_0."), hr_img[:, :hr_mid, :])
     cv2.imwrite(hr_path + name.replace(".", "_1."), hr_img[:, hr_mid:, :])
-
-
-

@@ -64,10 +64,7 @@ class LQGTDataset(data.Dataset):
         img_GT = util.read_img(self.GT_env, GT_path, resolution)
         # modcrop in the validation / test phase
         if self.opt['phase'] != 'train':
-            img_GT = util.modcrop(img_GT, scale*4)
-            # print(GT_path.split("/")[-1], "origin: ", img_GT.shape)
-            # img_GT = img_GT[200:-200, 200:-200, :]k
-            # print("cropped: ", img_GT.shape)
+            img_GT = util.modcrop(img_GT, scale)
         # change color space if necessary
         if self.opt['color']:
             img_GT = util.channel_convert(
@@ -81,9 +78,9 @@ class LQGTDataset(data.Dataset):
             else:
                 resolution = None
             img_LQ = util.read_img(self.LQ_env, LQ_path, resolution)
-            if self.opt['phase'] != 'train':
-                img_LQ = util.modcrop(img_LQ, 4)
-                # img_LQ = img_LQ[50:-50, 50:-50, :]
+            # if self.opt['phase'] != 'train':
+            #     img_LQ = util.modcrop(img_LQ, 4)
+            #     # img_LQ = img_LQ[50:-50, 50:-50, :]
 
         else:  # down-sampling on-the-fly
             # randomly scale during training

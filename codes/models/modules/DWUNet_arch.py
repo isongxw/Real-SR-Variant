@@ -115,8 +115,8 @@ class Up(nn.Module):
         out = self.transformer_i(x2)  # channel_in // 4
         out = self.wavelet_i(out)
         out = self.conv1(out)
-        # out = torch.cat([unified_scale(x1, out), out], 1)
-        out = torch.cat([x1, out], 1)
+        out = torch.cat([unified_scale(out, x1), x1], 1)
+        # out = torch.cat([x1, out], 1)
         out = self.dcr(out)
 
         return self.conv2(out)
@@ -144,7 +144,7 @@ class DWUNet(nn.Module):
         self.relu = nn.PReLU()
 
     def forward(self, x):
-        x = self.upsample1(x)
+        # x = self.upsample1(x)
         residual = x
         x1 = self.inc(x)
         x2 = self.down1(x1)
@@ -154,8 +154,8 @@ class DWUNet(nn.Module):
         x = self.up2(x2, x)
         x = self.up3(x1, x)
         out = self.outc(x)
-        # out = torch.add(unified_scale(out, residual), residual)
-        out = torch.add(self.relu(out), 0.5 * residual)
+        out = torch.add(self.relu(unified_scale(out, residual)), residual)
+        # out = torch.add(self.relu(unified_scale(out, residual)), residual)
         # out = torch.sigmoid(self.upsample(self.convf(out)))
 
         return out

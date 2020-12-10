@@ -237,6 +237,11 @@ class SRGANModel(BaseModel):
 
     def test(self):
         self.netG.eval()
+        if self.opt['use_ps'] is not None:
+            self.load_network(self.opt['path']['pretrain_model_G'].replace('latest_G', 'pre_PS'), self.netPS)
+            self.netPS.eval()
+            self.var_L = self.netPS(self.var_L)
+            self.var_L = self.var_L.clamp(0.0, 1.0)
         with torch.no_grad():
             self.fake_H = self.netG(self.var_L)
         self.netG.train()
@@ -255,20 +260,27 @@ class SRGANModel(BaseModel):
 
     def test_chop(self):
         self.netG.eval()
-        with torch.no_grad():
-            self.fake_H = self.forward_chop(self.var_L)
-        self.netG.train()
+        if self.opt['use_ps'] is not None:
+            self.load_network(self.opt['path']['pretrain_model_G'].replace('latest_G', 'pre_PS'), self.netPS)
+            self.netPS.eval()
+            self.fake_H = self.netPS(self.var_L)
+        #     self.var_L = self.var_L.clamp(0.0, 1.0)
+        # with torch.no_grad():
+        #     self.fake_H = self.forward_chop(self.var_L, min_size=800000)
+        # self.netG.train()
 
     def forward_chop(self, *args, shave=10, min_size=160000):
         # scale = 1 if self.input_large else self.scale[self.idx_scale]
-        scale = self.opt['scale']
+        if self.opt['use_ps'] is not None:
+            scale = 1
+        else:
+            scale = self.opt['scale']
         n_GPUs = min(torch.cuda.device_count(), 4)
         args = [a.squeeze().unsqueeze(0) for a in args]
 
         # height, width
         h, w = args[0].size()[-2:]
         # print('len(args)', len(args))
-        # print('args[0].size()', args[0].size())
 
         top = slice(0, h//2 + shave)
         bottom = slice(h - h//2 - shave, h)
@@ -280,8 +292,6 @@ class SRGANModel(BaseModel):
             a[..., bottom, left],
             a[..., bottom, right]
         ]) for a in args]
-        # print('len(x_chops)', len(x_chops))
-        # print('x_chops[0].size()', x_chops[0].size())
 
         y_chops = []
         if h * w < 4 * min_size:

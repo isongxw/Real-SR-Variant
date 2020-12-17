@@ -1,5 +1,5 @@
 #### general settings
-name: RealSR_DWUNet_PS
+name: RealSR_DWUNet_RFDNet
 use_tb_logger: true
 model: srgan
 distortion: sr
@@ -24,7 +24,7 @@ datasets:
 
 #### network structures
 network_G:
-  which_model_G: DWUNet
+  which_model_G: RFDNet
 network_D:
  which_model_D: discriminator_vgg_128  # 修改GT_size时需要同时修改D的网络结构
  in_nc: 3
@@ -48,10 +48,10 @@ train:
   beta2_D: 0.999
   lr_scheme: MultiStepLR
 
-  niter: 70001
+  niter: 60001
   warmup_iter: -1  # no warm up
   # lr_steps: [5000, 20000, 30000, 50000, 80000, 150000]
-  lr_steps: [15000, 20000, 30000, 40000]
+  lr_steps: [5000, 20000, 30000, 40000]
   lr_gamma: 0.5
 
   pixel_criterion: edge_aware
@@ -61,7 +61,7 @@ train:
   gan_type: ragan  # gan | ragan
   gan_weight: !!float 5e-3
 
-  PS_init_iter: 10000
+  PS_init_iter: -1
   D_update_ratio: 1
   D_init_iters: 0
 

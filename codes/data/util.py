@@ -11,8 +11,10 @@ from scipy import signal
 # Files & IO
 ####################
 
-###################### get image path list ######################
-IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP']
+''' get image path list '''
+
+IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG',
+                  '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP']
 
 
 def is_image_file(filename):
@@ -34,7 +36,8 @@ def _get_paths_from_images(path):
 
 def _get_paths_from_lmdb(dataroot):
     '''get image path list from lmdb meta info'''
-    meta_info = pickle.load(open(os.path.join(dataroot, 'meta_info.pkl'), 'rb'))
+    meta_info = pickle.load(
+        open(os.path.join(dataroot, 'meta_info.pkl'), 'rb'))
     paths = meta_info['keys']
     sizes = meta_info['resolution']
     if len(sizes) == 1:
@@ -53,11 +56,14 @@ def get_image_paths(data_type, dataroot):
             paths = sorted(_get_paths_from_images(dataroot))
             # sizes = len(paths)
         else:
-            raise NotImplementedError('data_type [{:s}] is not recognized.'.format(data_type))
+            raise NotImplementedError(
+                'data_type [{:s}] is not recognized.'.format(data_type))
     return paths, sizes
 
 
-###################### read images ######################
+'''read images'''
+
+
 def _read_img_lmdb(env, key, size):
     '''read image from lmdb with key (w/ and w/o fixed size)
     size: (C, H, W) tuple'''
@@ -349,9 +355,12 @@ def imresize(img, scale, antialiasing=True):
     kernel_width = weights_H.size(1)
     for i in range(out_H):
         idx = int(indices_H[i][0])
-        out_1[0, i, :] = img_aug[0, idx:idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
-        out_1[1, i, :] = img_aug[1, idx:idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
-        out_1[2, i, :] = img_aug[2, idx:idx + kernel_width, :].transpose(0, 1).mv(weights_H[i])
+        out_1[0, i, :] = img_aug[0, idx:idx + kernel_width,
+                                 :].transpose(0, 1).mv(weights_H[i])
+        out_1[1, i, :] = img_aug[1, idx:idx + kernel_width,
+                                 :].transpose(0, 1).mv(weights_H[i])
+        out_1[2, i, :] = img_aug[2, idx:idx + kernel_width,
+                                 :].transpose(0, 1).mv(weights_H[i])
 
     # process W dimension
     # symmetric copying
@@ -372,9 +381,12 @@ def imresize(img, scale, antialiasing=True):
     kernel_width = weights_W.size(1)
     for i in range(out_W):
         idx = int(indices_W[i][0])
-        out_2[0, :, i] = out_1_aug[0, :, idx:idx + kernel_width].mv(weights_W[i])
-        out_2[1, :, i] = out_1_aug[1, :, idx:idx + kernel_width].mv(weights_W[i])
-        out_2[2, :, i] = out_1_aug[2, :, idx:idx + kernel_width].mv(weights_W[i])
+        out_2[0, :, i] = out_1_aug[0, :, idx:idx +
+                                   kernel_width].mv(weights_W[i])
+        out_2[1, :, i] = out_1_aug[1, :, idx:idx +
+                                   kernel_width].mv(weights_W[i])
+        out_2[2, :, i] = out_1_aug[2, :, idx:idx +
+                                   kernel_width].mv(weights_W[i])
 
     return out_2
 
@@ -419,9 +431,12 @@ def imresize_np(img, scale, antialiasing=True):
     kernel_width = weights_H.size(1)
     for i in range(out_H):
         idx = int(indices_H[i][0])
-        out_1[i, :, 0] = img_aug[idx:idx + kernel_width, :, 0].transpose(0, 1).mv(weights_H[i])
-        out_1[i, :, 1] = img_aug[idx:idx + kernel_width, :, 1].transpose(0, 1).mv(weights_H[i])
-        out_1[i, :, 2] = img_aug[idx:idx + kernel_width, :, 2].transpose(0, 1).mv(weights_H[i])
+        out_1[i, :, 0] = img_aug[idx:idx + kernel_width,
+                                 :, 0].transpose(0, 1).mv(weights_H[i])
+        out_1[i, :, 1] = img_aug[idx:idx + kernel_width,
+                                 :, 1].transpose(0, 1).mv(weights_H[i])
+        out_1[i, :, 2] = img_aug[idx:idx + kernel_width,
+                                 :, 2].transpose(0, 1).mv(weights_H[i])
 
     # process W dimension
     # symmetric copying
@@ -442,11 +457,15 @@ def imresize_np(img, scale, antialiasing=True):
     kernel_width = weights_W.size(1)
     for i in range(out_W):
         idx = int(indices_W[i][0])
-        out_2[:, i, 0] = out_1_aug[:, idx:idx + kernel_width, 0].mv(weights_W[i])
-        out_2[:, i, 1] = out_1_aug[:, idx:idx + kernel_width, 1].mv(weights_W[i])
-        out_2[:, i, 2] = out_1_aug[:, idx:idx + kernel_width, 2].mv(weights_W[i])
+        out_2[:, i, 0] = out_1_aug[:, idx:idx +
+                                   kernel_width, 0].mv(weights_W[i])
+        out_2[:, i, 1] = out_1_aug[:, idx:idx +
+                                   kernel_width, 1].mv(weights_W[i])
+        out_2[:, i, 2] = out_1_aug[:, idx:idx +
+                                   kernel_width, 2].mv(weights_W[i])
 
     return out_2.numpy()
+
 
 def scipy_conv(img, kernel):
     img[:, :, 0] = signal.convolve2d(img[:, :, 0], kernel[0, :, :], 'same')
@@ -454,12 +473,14 @@ def scipy_conv(img, kernel):
     img[:, :, 2] = signal.convolve2d(img[:, :, 2], kernel[0, :, :], 'same')
     return img
 
+
 if __name__ == '__main__':
     # test imresize function
     # read images
     img = cv2.imread('test.png')
     img = img * 1.0 / 255
-    img = torch.from_numpy(np.transpose(img[:, :, [2, 1, 0]], (2, 0, 1))).float()
+    img = torch.from_numpy(np.transpose(
+        img[:, :, [2, 1, 0]], (2, 0, 1))).float()
     # imresize
     scale = 1 / 4
     import time

@@ -15,6 +15,7 @@ class MyOwnLoss(nn.Module):
         y1 = (y.clamp(0, 1) - 0.5) * 2
         return torch.mean(self.mse(x, y) + self.lpips(x1, y1))
 
+
 class CharbonnierLoss(nn.Module):
     """Charbonnier Loss (L1)"""
 
@@ -31,12 +32,12 @@ class CharbonnierLoss(nn.Module):
 class EdgeAwareLoss(nn.Module):
     """Edge-Aware Loss"""
 
-    def __init__(self, eps=1e-6, sig = 0.1, lam=0.1):
+    def __init__(self, eps=1e-6, sig=0.1, lam=0.1):
         super(EdgeAwareLoss, self).__init__()
         self.eps = eps
         self.sig = sig
         self.lam = lam
-    
+
     def forward(self, x, y):
         diff = x - y
         charbonnier = torch.sqrt(diff * diff + self.eps)
@@ -45,8 +46,6 @@ class EdgeAwareLoss(nn.Module):
         Bt = (edge_x >= self.sig) * 1
         loss = charbonnier + self.lam * torch.abs(Bt * diff)
         return loss.mean()
-
-
 
 
 # Define GAN loss: [vanilla | lsgan | wgan-gp]
@@ -69,7 +68,8 @@ class GANLoss(nn.Module):
 
             self.loss = wgan_loss
         else:
-            raise NotImplementedError('GAN type [{:s}] is not found'.format(self.gan_type))
+            raise NotImplementedError(
+                'GAN type [{:s}] is not found'.format(self.gan_type))
 
     def get_target_label(self, input, target_is_real):
         if self.gan_type == 'wgan-gp':

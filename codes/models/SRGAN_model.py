@@ -50,7 +50,8 @@ class SRGANModel(BaseModel):
         if self.is_train:
             # PS
             self.ps_loss = MyOwnLoss().to(self.device)
-            self.ps_init_iters = train_opt['PS_init_iter']
+            self.ps_init_iters = train_opt['PS_init_iter'] if train_opt['PS_init_iter'] else -1
+
             self.optimizer_PS = torch.optim.Adam(self.netPS.parameters(), lr=train_opt['lr_G'], weight_decay=1e-4, betas=(train_opt['beta1_G'], train_opt['beta2_G']))
             # G pixel loss
             if train_opt['pixel_weight'] > 0:
@@ -171,11 +172,13 @@ class SRGANModel(BaseModel):
                 p.requires_grad = False
             l_g_total = 0
             if step % self.D_update_ratio == 0 and step > self.D_init_iters:
-                self.load_network(os.path.join(self.opt['path']['models'], 'pre_PS.pth'), self.netPS)
-                # self.netPS.load_state_dict(torch.load(os.path.join(self.opt['path']['models'], 'pre_PS.pth')))
-                self.netPS.eval()
-                self.var_M = self.netPS(self.var_L.detach())
-                self.var_M = self.var_M.clamp(0.0, 1.0)
+                self.var_M = self.var_L
+
+                if self.ps_init_iters > 0:
+                    self.load_network(os.path.join(self.opt['path']['models'], 'pre_PS.pth'), self.netPS)
+                    self.netPS.eval()
+                    self.var_M = self.netPS(self.var_L.detach())
+                    self.var_M = self.var_M.clamp(0.0, 1.0)
 
                 self.optimizer_G.zero_grad()
                 self.fake_H = self.netG(self.var_M.detach())
@@ -265,9 +268,9 @@ class SRGANModel(BaseModel):
             self.netPS.eval()
             self.fake_H = self.netPS(self.var_L)
         #     self.var_L = self.var_L.clamp(0.0, 1.0)
-        # with torch.no_grad():
-        #     self.fake_H = self.forward_chop(self.var_L, min_size=800000)
-        # self.netG.train()
+        with torch.no_grad():
+            self.fake_H = self.forward_chop(self.var_L, min_size=800000)
+        self.netG.train()
 
     def forward_chop(self, *args, shave=10, min_size=160000):
         # scale = 1 if self.input_large else self.scale[self.idx_scale]

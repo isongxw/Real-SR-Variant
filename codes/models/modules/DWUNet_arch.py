@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from pytorch_wavelets import DWTForward, DWTInverse
+from models.modules.PixelShuffleModel import PSUpsample
 
 
 def unified_scale(x1, anchor):
@@ -126,7 +127,7 @@ class DWUNet(nn.Module):
     def __init__(self):
         super(DWUNet, self).__init__()
 
-        self.upsample1 = nn.Upsample(scale_factor=4, mode='bicubic')
+        # self.upsample1 = nn.Upsample(scale_factor=4, mode='bicubic')
         # self.convf = nn.Conv2d(in_channels=3, out_channels=3 * 16, kernel_size=3, stride=1, padding=1)
         # self.upsample = nn.PixelShuffle(upscale_factor=4)
 
@@ -143,8 +144,9 @@ class DWUNet(nn.Module):
                               kernel_size=3, stride=1, padding=1)
         self.relu = nn.PReLU()
 
+        self.upsample = PSUpsample()
+
     def forward(self, x):
-        # x = self.upsample1(x)
         residual = x
         x1 = self.inc(x)
         x2 = self.down1(x1)
@@ -155,6 +157,7 @@ class DWUNet(nn.Module):
         x = self.up3(x1, x)
         out = self.outc(x)
         out = torch.add(self.relu(unified_scale(out, residual)), residual)
+        out = self.upsample(out)
         # out = torch.add(self.relu(unified_scale(out, residual)), residual)
         # out = torch.sigmoid(self.upsample(self.convf(out)))
 

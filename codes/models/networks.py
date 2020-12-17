@@ -5,7 +5,9 @@ import models.modules.SRResNet_arch as SRResNet_arch
 import models.modules.discriminator_vgg_arch as SRGAN_arch
 import models.modules.RRDBNet_arch as RRDBNet_arch
 import models.modules.DWUNet_arch as DWUNet_arch
+import models.modules.RFDNet_arch as RFDNet_arch
 logger = logging.getLogger('base')
+
 
 class ResidualBlock(nn.Module):
     def __init__(self, channels):
@@ -21,7 +23,6 @@ class ResidualBlock(nn.Module):
         return x + residual
 
 
-
 class Generator(nn.Module):
     def __init__(self, n_res_blocks=8):
         super(Generator, self).__init__()
@@ -29,7 +30,8 @@ class Generator(nn.Module):
             nn.Conv2d(3, 64, kernel_size=3, padding=1),
             nn.PReLU()
         )
-        self.res_blocks = nn.ModuleList([ResidualBlock(64) for _ in range(n_res_blocks)])
+        self.res_blocks = nn.ModuleList(
+            [ResidualBlock(64) for _ in range(n_res_blocks)])
         self.block_output = nn.Conv2d(64, 3, kernel_size=3, padding=1)
         # for k, v in self.features.named_parameters():
         #     v.requires_grad = False
@@ -51,7 +53,9 @@ class Generator(nn.Module):
 ####################
 # define network
 ####################
-#### Generator
+# Generator
+
+
 def define_G(opt):
     opt_net = opt['network_G']
     which_model = opt_net['which_model_G']
@@ -64,28 +68,34 @@ def define_G(opt):
                                     nf=opt_net['nf'], nb=opt_net['nb'])
     elif which_model == 'DWUNet':
         netG = DWUNet_arch.DWUNet()
+    elif which_model == 'RFDNet':
+        netG = RFDNet_arch.RFDN()
     # elif which_model == 'sft_arch':  # SFT-GAN
     #     netG = sft_arch.SFT_Net()
     else:
-        raise NotImplementedError('Generator model [{:s}] not recognized'.format(which_model))
+        raise NotImplementedError(
+            'Generator model [{:s}] not recognized'.format(which_model))
     return netG
 
 
-#### Discriminator
+# Discriminator
 def define_D(opt):
     opt_net = opt['network_D']
     which_model = opt_net['which_model_D']
 
     if which_model == 'NLayerDiscriminator':
-        netD = SRGAN_arch.NLayerDiscriminator(input_nc=opt_net['in_nc'], ndf=opt_net['nf'], n_layers=opt_net['nlayer'])
+        netD = SRGAN_arch.NLayerDiscriminator(
+            input_nc=opt_net['in_nc'], ndf=opt_net['nf'], n_layers=opt_net['nlayer'])
     elif which_model == 'discriminator_vgg_128':
-        netD = SRGAN_arch.Discriminator_VGG_128(in_nc=opt_net['in_nc'], nf=opt_net['nf'])
+        netD = SRGAN_arch.Discriminator_VGG_128(
+            in_nc=opt_net['in_nc'], nf=opt_net['nf'])
     else:
-        raise NotImplementedError('Discriminator model [{:s}] not recognized'.format(which_model))
+        raise NotImplementedError(
+            'Discriminator model [{:s}] not recognized'.format(which_model))
     return netD
 
 
-#### Define Network used for Perceptual Loss
+# Define Network used for Perceptual Loss
 def define_F(opt, use_bn=False):
     gpu_ids = opt['gpu_ids']
     device = torch.device('cuda' if gpu_ids else 'cpu')

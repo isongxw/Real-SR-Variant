@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from pytorch_wavelets import DWTForward, DWTInverse
-from models.modules.PixelShuffleModel import PSUpsample
+# from models.modules.PixelShuffleModel import PSUpsample
 
 
 def unified_scale(x1, anchor):
@@ -34,9 +34,10 @@ class DoubleConv(nn.Module):
         return self.double_conv(x)
 
 
-class DCR_block(nn.Module):
+# Resiudual Dense Block
+class RDB(nn.Module):
     def __init__(self, channel_in):
-        super(DCR_block, self).__init__()
+        super(RDB, self).__init__()
 
         self.conv_1 = nn.Conv2d(
             in_channels=channel_in, out_channels=channel_in, kernel_size=3, stride=1, padding=1)
@@ -70,8 +71,8 @@ class Down(nn.Module):
 
         self.wavelet = DWTForward(J=1, wave='haar')
 
-        self.dcr = nn.Sequential(DCR_block(channel_in),
-                                 DCR_block(channel_in))
+        self.dcr = nn.Sequential(RDB(channel_in),
+                                 RDB(channel_in))
 
         self.conv = nn.Conv2d(channel_in * 4, channel_out,
                               kernel_size=3, stride=1, padding=1)
@@ -96,8 +97,8 @@ class Up(nn.Module):
         super(Up, self).__init__()
 
         self.wavelet_i = DWTInverse(wave='haar')
-        self.dcr = nn.Sequential(DCR_block(channel_in),
-                                 DCR_block(channel_in))
+        self.dcr = nn.Sequential(RDB(channel_in),
+                                 RDB(channel_in))
         self.conv1 = nn.Conv2d(channel_in // 4, channel_in //
                                2, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Conv2d(channel_in, channel_out,
@@ -127,10 +128,8 @@ class DWUNet(nn.Module):
     def __init__(self):
         super(DWUNet, self).__init__()
 
-        # self.upsample1 = nn.Upsample(scale_factor=4, mode='bicubic')
-        # self.convf = nn.Conv2d(in_channels=3, out_channels=3 * 16, kernel_size=3, stride=1, padding=1)
         # self.upsample = nn.PixelShuffle(upscale_factor=4)
-
+        self.upsample = nn.Upsample(scale_factor=4, mode='bicubic', align_corners=False)
         self.inc = DoubleConv(3, 64)
         self.down1 = Down(64, 128)  # 128*128
         self.down2 = Down(128, 256)  # 64*64
@@ -143,10 +142,12 @@ class DWUNet(nn.Module):
         self.outc = nn.Conv2d(in_channels=64, out_channels=3,
                               kernel_size=3, stride=1, padding=1)
         self.relu = nn.PReLU()
-
-        self.upsample = PSUpsample()
+        # self.convf = nn.Conv2d(
+        #     in_channels=3, out_channels=3 * 16, kernel_size=3, stride=1, padding=1)
+        # self.upsample = PSUpsample()
 
     def forward(self, x):
+        x = self.upsample(x)
         residual = x
         x1 = self.inc(x)
         x2 = self.down1(x1)
@@ -157,9 +158,8 @@ class DWUNet(nn.Module):
         x = self.up3(x1, x)
         out = self.outc(x)
         out = torch.add(self.relu(unified_scale(out, residual)), residual)
-        out = self.upsample(out)
-        # out = torch.add(self.relu(unified_scale(out, residual)), residual)
-        # out = torch.sigmoid(self.upsample(self.convf(out)))
+
+        # out = torch.sigmoid(self.convf(out))
 
         return out
 
@@ -172,35 +172,35 @@ class DWUNet1(nn.Module):
         self.DWT = DWTForward(J=1, wave='haar').cuda()  # 小波分解
         self.IDWT = DWTInverse(wave='haar').cuda()  # 合成
 
-        self.DCR_block21 = self.make_layer(DCR_block, 3)
-        self.DCR_block22 = self.make_layer(DCR_block, 3)
+        self.RDB21 = self.make_layer(RDB, 3)
+        self.RDB22 = self.make_layer(RDB, 3)
         self.conv_i1 = nn.Conv2d(
             in_channels=12, out_channels=64, kernel_size=3, stride=1, padding=1)
 
-        self.DCR_block31 = self.make_layer(DCR_block, 64)
-        self.DCR_block32 = self.make_layer(DCR_block, 64)
+        self.RDB31 = self.make_layer(RDB, 64)
+        self.RDB32 = self.make_layer(RDB, 64)
 
         self.conv_i2 = nn.Conv2d(
             in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1)
 
-        self.DCR_block41 = self.make_layer(DCR_block, 512)
-        self.DCR_block42 = self.make_layer(DCR_block, 512)
+        self.RDB41 = self.make_layer(RDB, 512)
+        self.RDB42 = self.make_layer(RDB, 512)
 
         self.conv_i3 = nn.Conv2d(
             in_channels=2048, out_channels=1024, kernel_size=3, stride=1, padding=1)
 
-        self.DCR_block33 = self.make_layer(DCR_block, 1280)
-        self.DCR_block34 = self.make_layer(DCR_block, 1280)
+        self.RDB33 = self.make_layer(RDB, 1280)
+        self.RDB34 = self.make_layer(RDB, 1280)
         self.conv_i4 = nn.Conv2d(
             in_channels=1280, out_channels=640, kernel_size=3, stride=1, padding=1)
 
-        self.DCR_block23 = self.make_layer(DCR_block, 224)
-        self.DCR_block24 = self.make_layer(DCR_block, 224)
+        self.RDB23 = self.make_layer(RDB, 224)
+        self.RDB24 = self.make_layer(RDB, 224)
         self.conv_i5 = nn.Conv2d(
             in_channels=224, out_channels=64, kernel_size=3, stride=1, padding=1)
 
-        self.DCR_block13 = self.make_layer(DCR_block, 16)
-        self.DCR_block14 = self.make_layer(DCR_block, 16)
+        self.RDB13 = self.make_layer(RDB, 16)
+        self.RDB14 = self.make_layer(RDB, 16)
         self.conv_f = nn.Conv2d(
             in_channels=16, out_channels=3, kernel_size=1, stride=1, padding=0)
         self.relu2 = nn.PReLU()
@@ -233,23 +233,23 @@ class DWUNet1(nn.Module):
 
         # 第一次分解
         DMT1_yl, DMT1_yh = self.DWT(x)  # batchsize x 3 x 32 x 32
-        DMT1_yl = self.DCR_block21(DMT1_yl)
-        DMT1_yl = self.DCR_block22(DMT1_yl)
+        DMT1_yl = self.RDB21(DMT1_yl)
+        DMT1_yl = self.RDB22(DMT1_yl)
         out = self._transformer(DMT1_yl, DMT1_yh)  # batchsize x 12 x 32 x 32
         conc2 = self.conv_i1(out)  # 尺度对齐
 
         # 第二次分解
         DMT2_yl, DMT2_yh = self.DWT(conc2)  # 16 x 16
-        DMT2_yl = self.DCR_block31(DMT2_yl)
-        DMT2_yl = self.DCR_block32(DMT2_yl)
+        DMT2_yl = self.RDB31(DMT2_yl)
+        DMT2_yl = self.RDB32(DMT2_yl)
         out = self._transformer(DMT2_yl, DMT2_yh)  # 16 x 16
         conc3 = self.conv_i2(out)
 
         # 第三次分解
         DMT3_yl, DMT3_yh = self.DWT(conc3)  # 8 x 8
         # print("DMT3_yl.shape, DMT3_yh.shape", len(DMT2_yl[0][0]), len(DMT2_yh[0][0]))
-        DMT3_yl = self.DCR_block41(DMT3_yl)
-        DMT3_yl = self.DCR_block42(DMT3_yl)
+        DMT3_yl = self.RDB41(DMT3_yl)
+        DMT3_yl = self.RDB42(DMT3_yl)
         # print("DMT3_yl.shape, DMT3_yh.shape", len(DMT2_yl[0][0]), len(DMT2_yh[0][0]))
         out = self._transformer(DMT3_yl, DMT3_yh)  # 8 x 8
         # print("conc4.shape, out.shape", out.shape)
@@ -263,23 +263,23 @@ class DWUNet1(nn.Module):
         out = self.IDWT(out)  # 16 x 16
         # print("conc3.shape, out.shape", conc3.shape, out.shape)
         out = torch.cat([conc3, out], 1)
-        out = self.DCR_block33(out)
-        out = self.DCR_block34(out)
+        out = self.RDB33(out)
+        out = self.RDB34(out)
         out = self.conv_i4(out)
 
         # 第二次合成
         out = self._Itransformer(out)
         out = self.IDWT(out)  # 32 x 32
         out = torch.cat([conc2, out], 1)
-        out = self.DCR_block23(out)
-        out = self.DCR_block24(out)
+        out = self.RDB23(out)
+        out = self.RDB24(out)
         out = self.conv_i5(out)
 
         # 第三次合成
         out = self._Itransformer(out)
         out = self.IDWT(out)  # 64 x 64
-        out = self.DCR_block13(out)
-        out = self.DCR_block14(out)
+        out = self.RDB13(out)
+        out = self.RDB14(out)
         out = self.relu2(self.conv_f(out))
 
         out = torch.add(residual, out)

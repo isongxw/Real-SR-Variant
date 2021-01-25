@@ -8,6 +8,11 @@ dped:
     hr:
       train: '../../datasets/ntire20/DPEDiphone-tr-x'
       valid: '../../datasets/ntire20/DPEDiphone-va'
+reds:
+   tdsr:
+    source: '../../datasets/ntire21/train-x'
+    target: '../../datasets/ntire21/train-y'
 datasets:
   df2k: '../datasets/DF2K'
   dped: '../datasets/DPED'
+  reds: '../datasets/reds'

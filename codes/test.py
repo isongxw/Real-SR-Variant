@@ -46,7 +46,7 @@ for test_loader in test_loaders:
     test_results['lpips'] = []
     test_results['psnr_y'] = []
     test_results['ssim_y'] = []
-    test_results['lpips_y'] = []
+    # test_results['lpips_y'] = []
 
     for data in test_loader:
         need_GT = False if test_loader.dataset.opt['dataroot_GT'] is None else True
@@ -75,8 +75,8 @@ for test_loader in test_loaders:
         # calculate PSNR and SSIM
         if need_GT:
             gt_img = util.tensor2img(visuals['GT'])
-            gt_img = gt_img / 255.
-            sr_img = sr_img / 255.
+            gt_img = gt_img
+            sr_img = sr_img
 
             crop_border = opt['crop_border'] if opt['crop_border'] else opt['scale']
             if crop_border == 0:
@@ -86,31 +86,13 @@ for test_loader in test_loaders:
                 cropped_sr_img = sr_img[crop_border:-crop_border, crop_border:-crop_border, :]
                 cropped_gt_img = gt_img[crop_border:-crop_border, crop_border:-crop_border, :]
 
-            psnr = util.calculate_psnr(cropped_sr_img * 255, cropped_gt_img * 255)
-            ssim = util.calculate_ssim(cropped_sr_img * 255, cropped_gt_img * 255)
-            lpips = util.calculate_lpips(cropped_sr_img * 255, cropped_gt_img * 255)
+            psnr = util.calculate_psnr(cropped_sr_img, cropped_gt_img)
+            ssim = util.calculate_ssim(cropped_sr_img, cropped_gt_img)
             test_results['psnr'].append(psnr)
             test_results['ssim'].append(ssim)
-            test_results['lpips'].append(lpips)
 
-            if gt_img.shape[2] == 3:  # RGB image
-                sr_img_y = bgr2ycbcr(sr_img, only_y=True)
-                gt_img_y = bgr2ycbcr(gt_img, only_y=True)
-                if crop_border == 0:
-                    cropped_sr_img_y = sr_img_y
-                    cropped_gt_img_y = gt_img_y
-                else:
-                    cropped_sr_img_y = sr_img_y[crop_border:-crop_border, crop_border:-crop_border]
-                    cropped_gt_img_y = gt_img_y[crop_border:-crop_border, crop_border:-crop_border]
-                psnr_y = util.calculate_psnr(cropped_sr_img_y * 255, cropped_gt_img_y * 255)
-                ssim_y = util.calculate_ssim(cropped_sr_img_y * 255, cropped_gt_img_y * 255)
-                test_results['psnr_y'].append(psnr_y)
-                test_results['ssim_y'].append(ssim_y)
-                logger.info(
-                    '{:20s} - PSNR: {:.6f} dB; SSIM: {:.6f}; LPIPS: {:.6f}; PSNR_Y: {:.6f} dB; SSIM_Y: {:.6f}.'.
-                    format(img_name, psnr, ssim, lpips, psnr_y, ssim_y))
-            else:
-                logger.info('{:20s} - PSNR: {:.6f} dB; SSIM: {:.6f}.'.format(img_name, psnr, ssim))
+            logger.info('{:20s} - PSNR: {:.6f} dB; SSIM: {:.6f}.'.format(img_name, psnr, ssim))
+
         else:
             logger.info(img_name)
 
@@ -121,10 +103,11 @@ for test_loader in test_loaders:
         # Average PSNR/SSIM results
         ave_psnr = sum(test_results['psnr']) / len(test_results['psnr'])
         ave_ssim = sum(test_results['ssim']) / len(test_results['ssim'])
-        ave_lpips = sum(test_results['lpips']) / len(test_results['lpips'])
+        # ave_lpips = sum(test_results['lpips']) / len(test_results['lpips'])
         logger.info(
-            '----Average PSNR/SSIM/LPIPS results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f}; LPIPS: {:.6f}\n'.format(
-                test_set_name, ave_psnr, ave_ssim, ave_lpips))
+            '----Average PSNR/SSIM/LPIPS results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f}\n'.format(
+                test_set_name, ave_psnr, ave_ssim))
+
         if test_results['psnr_y'] and test_results['ssim_y']:
             ave_psnr_y = sum(test_results['psnr_y']) / len(test_results['psnr_y'])
             ave_ssim_y = sum(test_results['ssim_y']) / len(test_results['ssim_y'])
@@ -132,6 +115,5 @@ for test_loader in test_loaders:
                 '----Y channel, average PSNR/SSIM/LPIPS----\n\tPSNR_Y: {:.6f} dB; SSIM_Y: {:.6f}\n'.
                 format(ave_psnr_y, ave_ssim_y))
 
-        util.email_notification("isongxw@foxmail.com", "Test Finished: " + test_set_name, '----Average PSNR/SSIM/LPIPS results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f}; LPIPS: {:.6f}\n'.format(
-                test_set_name, ave_psnr, ave_ssim, ave_lpips) + '----Y channel, average PSNR/SSIM/LPIPS----\n\tPSNR_Y: {:.6f} dB; SSIM_Y: {:.6f}\n'.
-                format(ave_psnr_y, ave_ssim_y))
+        util.email_notification("isongxw@foxmail.com", "Test Finished: " + test_set_name, '----Average PSNR/SSIM results for {}----\n\tPSNR: {:.6f} dB; SSIM: {:.6f};\n'.format(
+                test_set_name, ave_psnr, ave_ssim))

@@ -9,6 +9,8 @@ from collections import OrderedDict
 import numpy as np
 import cv2
 import torch
+import imageio
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 from torchvision.utils import make_grid
 from shutil import get_terminal_size
 import lpips
@@ -177,37 +179,15 @@ def calculate_lpips(img1, img2):
     return loss_fn_vgg(img1, img2).detach().numpy().flatten()[0]
 
 
-def calculate_psnr(img1, img2):
-    # img1 and img2 have range [0, 255]
-    img1 = img1.astype(np.float64)
-    img2 = img2.astype(np.float64)
-    mse = np.mean((img1 - img2)**2)
-    if mse == 0:
-        return float('inf')
-    return 20 * math.log10(255.0 / math.sqrt(mse))
+def calculate_psnr(ref_img, res_img):
+    psnr = peak_signal_noise_ratio(ref_img, res_img)
+    return psnr
 
 
-def ssim(img1, img2):
-    C1 = (0.01 * 255)**2
-    C2 = (0.03 * 255)**2
+def ssim(ref_img, res_img):
+    ssim = structural_similarity(ref_img, res_img, multichannel=True, gaussian_weights=True, use_sample_covariance=False)
+    return ssim
 
-    img1 = img1.astype(np.float64)
-    img2 = img2.astype(np.float64)
-    kernel = cv2.getGaussianKernel(11, 1.5)
-    window = np.outer(kernel, kernel.transpose())
-
-    mu1 = cv2.filter2D(img1, -1, window)[5:-5, 5:-5]  # valid
-    mu2 = cv2.filter2D(img2, -1, window)[5:-5, 5:-5]
-    mu1_sq = mu1**2
-    mu2_sq = mu2**2
-    mu1_mu2 = mu1 * mu2
-    sigma1_sq = cv2.filter2D(img1**2, -1, window)[5:-5, 5:-5] - mu1_sq
-    sigma2_sq = cv2.filter2D(img2**2, -1, window)[5:-5, 5:-5] - mu2_sq
-    sigma12 = cv2.filter2D(img1 * img2, -1, window)[5:-5, 5:-5] - mu1_mu2
-
-    ssim_map = ((2 * mu1_mu2 + C1) * (2 * sigma12 + C2)) / ((mu1_sq + mu2_sq + C1) *
-                                                            (sigma1_sq + sigma2_sq + C2))
-    return ssim_map.mean()
 
 
 def calculate_ssim(img1, img2):

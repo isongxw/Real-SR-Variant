@@ -102,7 +102,7 @@ class SRModel(BaseModel):
         self.netG.eval()
         with torch.no_grad():
             self.fake_H = self.netG(self.var_L)
-        self.netG.train()
+        # self.netG.train()
 
     def test_chop(self):
         self.netG.eval()

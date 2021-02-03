@@ -70,9 +70,6 @@ def define_G(opt):
         netG = DWUNet_arch.DWUNet()
     elif which_model == 'RFDNet':
         netG = RFDNet_arch.RFDN()
-    # elif which_model == 'sft_arch':  # SFT-GAN
-    #     netG = sft_arch.SFT_Net()
-    else:
         raise NotImplementedError(
             'Generator model [{:s}] not recognized'.format(which_model))
     return netG

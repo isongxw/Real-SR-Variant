@@ -46,7 +46,6 @@ for test_loader in test_loaders:
     test_results['lpips'] = []
     test_results['psnr_y'] = []
     test_results['ssim_y'] = []
-    # test_results['lpips_y'] = []
 
     for data in test_loader:
         need_GT = False if test_loader.dataset.opt['dataroot_GT'] is None else True
